@@ -16,13 +16,29 @@ SELECT BATCH_ID, 'MANDATORY_MEMBER_FIELDS', 'ERROR', COALESCE(MEMBER_ID, MEMBER_
 FROM STG_MEMBER
 WHERE MEMBER_NAME IS NULL OR MEMBER_ID IS NULL OR ENROLLMENT_DATE IS NULL;
 
--- Business identity uniqueness inside a batch.
+-- Source-contract key: Member_Name is marked as a key in the assessment.
 INSERT INTO DATA_QUALITY_RESULTS (BATCH_ID, CHECK_NAME, SEVERITY, RECORD_KEY, ERROR_MESSAGE)
-SELECT BATCH_ID, 'MEMBER_ID_UNIQUENESS', 'ERROR', MEMBER_ID,
-       'Duplicate Member_ID within batch; latest record wins only at current-state layer'
+SELECT BATCH_ID, 'MEMBER_NAME_KEY_UNIQUENESS', 'ERROR', MEMBER_NAME,
+       'Member_Name occurs more than once within the batch; source contract marks it as a key'
+FROM STG_MEMBER
+GROUP BY BATCH_ID, MEMBER_NAME
+HAVING MEMBER_NAME IS NOT NULL AND COUNT(*) > 1;
+
+-- Business identity uniqueness inside a batch. Multiple Member_ID records can be
+-- legitimate change events; the current-state layer resolves them deterministically.
+INSERT INTO DATA_QUALITY_RESULTS (BATCH_ID, CHECK_NAME, SEVERITY, RECORD_KEY, ERROR_MESSAGE)
+SELECT BATCH_ID, 'MEMBER_ID_DUPLICATE_EVENTS', 'WARNING', MEMBER_ID,
+       'Multiple Member_ID records in batch; latest-record-wins resolves current state'
 FROM STG_MEMBER
 GROUP BY BATCH_ID, MEMBER_ID
 HAVING MEMBER_ID IS NOT NULL AND COUNT(*) > 1;
+
+-- Member ID length.
+INSERT INTO DATA_QUALITY_RESULTS (BATCH_ID, CHECK_NAME, SEVERITY, RECORD_KEY, ERROR_MESSAGE)
+SELECT BATCH_ID, 'MEMBER_ID_LENGTH', 'ERROR', MEMBER_ID,
+       'Member_ID exceeds the specified maximum length of 18 characters'
+FROM STG_MEMBER
+WHERE LENGTH(MEMBER_ID) > 18;
 
 -- Tier domain.
 INSERT INTO DATA_QUALITY_RESULTS (BATCH_ID, CHECK_NAME, SEVERITY, RECORD_KEY, ERROR_MESSAGE)
