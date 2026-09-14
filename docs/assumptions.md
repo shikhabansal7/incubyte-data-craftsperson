@@ -51,3 +51,7 @@ Transactions are retained even when the profile does not yet exist by using a LE
 ## 10. Historical versus current state
 
 `DIM_MEMBER_CURRENT` represents the latest known state. Raw and staging layers retain batch history. If downstream consumers need full member history, a separate SCD Type 2 dimension should be introduced rather than overloading the current-state table.
+
+## 11. Flat-file delimiter position
+
+The supplied detail records begin with `|D|`. After splitting on `|`, index 1 is the record type and member attributes begin at index 2. The staging SQL explicitly accounts for this leading delimiter so source positions are not shifted.

@@ -56,43 +56,21 @@ SELECT
     NULLIF(TRIM(F[7]::VARCHAR), ''),
     NULLIF(TRIM(F[8]::VARCHAR), ''),
     NULLIF(TRIM(F[9]::VARCHAR), ''),
-    CASE WHEN ARRAY_SIZE(F) >= 13
-         THEN TRY_TO_NUMBER(NULLIF(TRIM(F[10]::VARCHAR), ''))
-         ELSE NULL END,
-    CASE WHEN ARRAY_SIZE(F) >= 13
-         THEN TRY_TO_DATE(NULLIF(TRIM(F[11]::VARCHAR), ''), 'MMDDYYYY')
-         ELSE TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY')
-    END,
-    CASE WHEN ARRAY_SIZE(F) >= 13
-         THEN NULLIF(TRIM(F[12]::VARCHAR), '')
-         ELSE NULLIF(TRIM(F[11]::VARCHAR), '')
-    END,
+    NULL,
+    TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY'),
+    NULLIF(TRIM(F[11]::VARCHAR), ''),
     CASE
-        WHEN (
-            CASE WHEN ARRAY_SIZE(F) >= 13
-                 THEN TRY_TO_DATE(NULLIF(TRIM(F[11]::VARCHAR), ''), 'MMDDYYYY')
-                 ELSE TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY')
-            END
-        ) IS NULL THEN NULL
+        WHEN TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY') IS NULL THEN NULL
         ELSE DATEDIFF(
             year,
-            CASE WHEN ARRAY_SIZE(F) >= 13
-                 THEN TRY_TO_DATE(NULLIF(TRIM(F[11]::VARCHAR), ''), 'MMDDYYYY')
-                 ELSE TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY')
-            END,
+            TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY'),
             CURRENT_DATE()
         )
         - IFF(
             DATE_FROM_PARTS(
                 YEAR(CURRENT_DATE()),
-                MONTH(CASE WHEN ARRAY_SIZE(F) >= 13
-                           THEN TRY_TO_DATE(NULLIF(TRIM(F[11]::VARCHAR), ''), 'MMDDYYYY')
-                           ELSE TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY')
-                      END),
-                DAY(CASE WHEN ARRAY_SIZE(F) >= 13
-                         THEN TRY_TO_DATE(NULLIF(TRIM(F[11]::VARCHAR), ''), 'MMDDYYYY')
-                         ELSE TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY')
-                    END)
+                MONTH(TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY')),
+                DAY(TRY_TO_DATE(NULLIF(TRIM(F[10]::VARCHAR), ''), 'MMDDYYYY'))
             ) > CURRENT_DATE(),
             1, 0
         )
