@@ -1,0 +1,29 @@
+-- Current member state.
+-- MEMBER_ID is used as the business identity because country movement and
+-- redemption joins require a stable member identifier.
+
+CREATE OR REPLACE TABLE DIM_MEMBER_CURRENT AS
+SELECT
+    BATCH_ID,
+    SOURCE_FILE_NAME,
+    MEMBER_NAME,
+    MEMBER_ID,
+    ENROLLMENT_DATE,
+    LAST_FLIGHT_DATE,
+    TIER_CODE,
+    AGENT_NAME,
+    STATE_CODE,
+    COUNTRY_CODE,
+    POST_CODE,
+    DATE_OF_BIRTH,
+    ACTIVE_MEMBER,
+    AGE,
+    STALE_MEMBER,
+    INGESTED_AT,
+    RECORD_HASH
+FROM STG_MEMBER
+WHERE MEMBER_ID IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY MEMBER_ID
+    ORDER BY INGESTED_AT DESC, BATCH_ID DESC, SOURCE_ROW_NUMBER DESC
+) = 1;
